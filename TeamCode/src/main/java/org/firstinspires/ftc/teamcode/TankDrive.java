@@ -24,6 +24,7 @@ import com.acmerobotics.roadrunner.TankKinematics;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeTrajectory;
 import com.acmerobotics.roadrunner.TimeTurn;
+import com.acmerobotics.roadrunner.Trajectory;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TrajectoryBuilderParams;
 import com.acmerobotics.roadrunner.TurnConstraints;
@@ -61,6 +62,9 @@ import java.util.List;
 
 @Config
 public final class TankDrive {
+    public static void FollowTrajectory(Trajectory forward) {
+    }
+
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
