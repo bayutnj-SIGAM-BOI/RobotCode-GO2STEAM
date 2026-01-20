@@ -32,7 +32,7 @@ public class Shooter {
     }
 
     public void shootMechanism() {
-        if (gamepad1.x && !isShooting) {
+        if (gamepad1.right_bumper && !isShooting) {
             isShooting = true;
             state = State.SERVO_SHOOT;
         }

@@ -32,10 +32,13 @@ public class LinearMotorLift {
     }
 
     public void parking() {
-        if (gamepad2.y) {
+        if (gamepad2.right_stick_y > 0) {
             leftMotor.setPower(0.6);
             rightMotor.setPower(0.6);
 
+        }else if(gamepad2.right_stick_y < 0) {
+            leftMotor.setPower(-0.6);
+            rightMotor.setPower(-0.6);
         }else {
             leftMotor.setPower(0);
             rightMotor.setPower(0);

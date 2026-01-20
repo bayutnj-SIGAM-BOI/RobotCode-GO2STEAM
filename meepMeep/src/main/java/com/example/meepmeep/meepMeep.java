@@ -17,19 +17,13 @@ public class meepMeep {
                 .build();
 
         Go2Steam.runAction(Go2Steam.getDrive().actionBuilder(new Pose2d(47, 0, 0))
-                        .lineToX(-16)
-                        .turnTo(Math.toRadians(-130))
-                        .waitSeconds(1)
-                        .splineToConstantHeading(new Vector2d(56,56), Math.toRadians(0))
-                        .waitSeconds(5)
-                        .splineToConstantHeading(new Vector2d(0,0), Math.toRadians(120))
-                        .splineTo(new Vector2d(-61, 57), Math.toRadians(90))
-                        .strafeToLinearHeading(new Vector2d(0, 0), Math.toRadians(-130))
-                        .splineTo(new Vector2d(-56,-56), Math.toRadians(90))
-                        .strafeToLinearHeading(new Vector2d(56, 56),Math.toRadians(-130))
-                        .lineToX(0)
-                        .waitSeconds(2)
-                        .lineToX(0)
+                        .splineToLinearHeading(new Pose2d(new Vector2d(-10, -9), 10), Math.toRadians(30))
+                        .strafeTo(new Vector2d(57, -59))
+                        .strafeTo(new Vector2d(-10, -9))
+                        .splineToLinearHeading(new Pose2d(48.8, 0, 10), Math.toRadians(30))
+                        .strafeTo(new Vector2d(57.5 , 58.2))
+                        .splineToLinearHeading(new Pose2d(new Vector2d(-25.2, 24.9), 90), Math.toRadians(30))
+
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
