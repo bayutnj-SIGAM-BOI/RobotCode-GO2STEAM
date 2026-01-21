@@ -113,6 +113,10 @@ public class mainTeleop extends OpMode {
             flyWheel.setVelocity(0);
         }
 
+        if (flyWheel.getVelocity() > ShooterVel) {
+            gamepad1.rumble(300);
+        }
+
         telemetry.addLine("===== TELEOP STATUS =====");
         telemetry.addData("MODE", autoAlign ? "AUTO ALIGN": "MANUAL");
         telemetry.addData("Shooter Status", ShooterOn ? "ON" : "OFF");
