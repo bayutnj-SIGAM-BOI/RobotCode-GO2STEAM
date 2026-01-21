@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Autonomous(name = "Autonomous_1", group = "Go2Steam")
 public class test extends LinearOpMode {
     public class Lift {
-        private DcMotorEx lift;
+        private final DcMotorEx lift;
 
         public Lift(HardwareMap hardwareMap) {
             lift = hardwareMap.get(DcMotorEx.class, "liftMotor");
@@ -79,7 +79,7 @@ public class test extends LinearOpMode {
     }
 
     public class Claw {
-        private Servo claw;
+        private final Servo claw;
 
         public Claw(HardwareMap hardwareMap) {
             claw = hardwareMap.get(Servo.class, "claw");

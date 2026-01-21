@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class LinearMotorLift {
     private DcMotor leftMotor,rightMotor;
-    private boolean LRMotor = false;
+    private final boolean LRMotor = false;
 
     private static final int HIGH_MODE = 1500;
     private static final int GROUND_MODE = 0;

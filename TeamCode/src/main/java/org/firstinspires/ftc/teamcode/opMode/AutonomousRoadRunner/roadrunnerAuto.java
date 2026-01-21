@@ -15,21 +15,26 @@ import org.firstinspires.ftc.teamcode.TankDrive;
 @Autonomous(name = "AutoRoadRunner", group = "Go2steam")
 public class roadrunnerAuto extends LinearOpMode {
 
-    Servo artifactStop;
-    DcMotor leftShooter, rightShooter;
+    Servo Launcher;
+    DcMotor rightShooter = null;
 
-
+    public class ShooterSys {
+        public void Launcher() {
+            Launcher.setPosition(0.4);
+            sleep(300);
+            Launcher.setPosition(0.75);
+        }
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
-        artifactStop = hardwareMap.get(Servo.class, "artifactStooper");
-        leftShooter = hardwareMap.get(DcMotor.class, "flyWheelL");
+        Launcher = hardwareMap.get(Servo.class, "Launcher");
         rightShooter = hardwareMap.get(DcMotor.class, "flyWheelR");
 
-        artifactStop.setPosition(0.2);
+        Launcher.setPosition(0.75);
         rightShooter.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        Pose2d beginPose = new Pose2d(new Vector2d(47,0), Math.toRadians(0));
+        Pose2d beginPose = new Pose2d(new Vector2d(58.8,-9.2), Math.toRadians(0));
 
         TankDrive drive = new TankDrive(hardwareMap, beginPose);
 
@@ -38,7 +43,11 @@ public class roadrunnerAuto extends LinearOpMode {
         telemetry.update();
 
         Action path = drive.actionBuilder(beginPose)
-                .lineToX(10)
+//                .lineToX(10)
+//                .turn(Math.toRadians(90))
+//                .lineToYConstantHeading(58.8)
+                .lineToX(-65)
+//                .stopAndAdd(ShooterSys)
                 .build();
 
         waitForStart();

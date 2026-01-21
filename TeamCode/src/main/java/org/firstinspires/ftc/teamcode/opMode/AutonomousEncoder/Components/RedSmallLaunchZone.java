@@ -12,8 +12,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class RedSmallLaunchZone extends LinearOpMode{
 
     private DcMotor leftDrive, rightDrive = null;
-    private DcMotorEx flyWheelL, flyWheelR = null;
-    private ElapsedTime runtime = new ElapsedTime();
+    private DcMotorEx flyWheel = null;
+    private Servo Launcher;
+    private final ElapsedTime runtime = new ElapsedTime();
 
 //    Drive Train motors setting
     static final double WHEEL_DIAMETER_INCHES = 3.54331; // 90mm In Inches 3,5 or more
@@ -33,13 +34,15 @@ public class RedSmallLaunchZone extends LinearOpMode{
         leftDrive = hardwareMap.get(DcMotor.class, "left_motor_Drive");
         rightDrive = hardwareMap.get(DcMotor.class, "right_motor_Drive");
 
-        flyWheelL = hardwareMap.get(DcMotorEx.class, "flyWheelL");
-        flyWheelR = hardwareMap.get(DcMotorEx.class, "flyWheelR");
+        flyWheel = hardwareMap.get(DcMotorEx.class, "flyWheelR");
+        Launcher = hardwareMap.get(Servo.class, "Launcher");
 
 
 //        set Direction to Reverse
-        rightDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        flyWheelR.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        flyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 //        Encoder Setup
         leftDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -47,10 +50,8 @@ public class RedSmallLaunchZone extends LinearOpMode{
 
         leftDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        Launcher.setPosition(0.75);
 
-
-        flyWheelL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flyWheelR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
 
@@ -105,6 +106,7 @@ public class RedSmallLaunchZone extends LinearOpMode{
 
             leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         }
     }
 
@@ -112,17 +114,17 @@ public class RedSmallLaunchZone extends LinearOpMode{
         if (opModeIsActive()) {
          sleep(500);
 
-         flyWheelR.setVelocity(FLYWHEEL_TPS);
-         flyWheelL.setVelocity(FLYWHEEL_TPS);
+         flyWheel.setVelocity(FLYWHEEL_TPS);
+         Launcher.setPosition(0.3);
          sleep(delayShoot);
 
          sleep(500);
 
-         flyWheelR.setVelocity(0);
-         flyWheelL.setVelocity(0);
+         Launcher.setPosition(0.75);
+         flyWheel.setVelocity(0);
 
-         telemetry.addData("FlyL Velocity : ", flyWheelL.getVelocity());
-         telemetry.addData("FlyR Velocity : ", flyWheelR.getVelocity());
+
+         telemetry.addData("Flywheel Velocity : ", flyWheel.getVelocity());
          telemetry.update();
         }
     }
