@@ -87,11 +87,11 @@ public class mainTeleop extends OpMode {
         if (!ShooterOn && !LauncherLock) { // So if Shooter is not on and LaunchLock is false, LaunchLock will be true, which makes the Launcher not work;
             LauncherLock = true;
         }
-         else if (gamepad1.a && ShooterOn) { // And if gamepad1.a is pressed && the Shoter is on you can use the Launcher
+         else if (gamepad1.a && ShooterOn) { // And if gamepad1.a is pressed && the Shoter is active you can use the Launcher
             LauncherLock = false;
-            Launcher.setPosition(0.4);
+            Launcher.setPosition(0.5);
             sleep(300);
-            Launcher.setPosition(0.75);
+            Launcher.setPosition(0.875);
         }
 
         if (gamepad1.y && !lastY) {
@@ -99,7 +99,7 @@ public class mainTeleop extends OpMode {
         }
         lastY = gamepad1.y;
 
-        if (gamepad1.dpadRightWasPressed()) {ShooterVel = 1850;}
+        if (gamepad1.dpadRightWasPressed()) {ShooterVel = 18500;}
 
         if (gamepad1.dpadLeftWasPressed()) {ShooterVel = 1500;}
 
