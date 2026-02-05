@@ -23,7 +23,6 @@ public class mainTeleop extends OpMode {
     private Servo Launcher;
     boolean autoAlign = false;
     double targetRPM = 1800;
-    boolean lastA = false;
     boolean lastY = false;
     boolean ShooterOn = false;
     boolean LauncherLock = true;
