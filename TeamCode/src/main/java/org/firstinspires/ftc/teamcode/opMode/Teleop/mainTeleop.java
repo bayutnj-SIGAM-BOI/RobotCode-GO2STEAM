@@ -8,13 +8,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.AprilTagWebcam;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Mat;
 
 import java.util.List;
 
@@ -23,20 +26,33 @@ import java.util.List;
 public class mainTeleop extends OpMode {
     private DcMotor leftDrive = null;
     private DcMotor rightDrive = null;
-    private DcMotorEx  flyWheel = null;
+    private DcMotorEx flyWheel = null;
     private Servo Launcher;
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTagProcessor;
     boolean autoAlign = false;
-    double TARGET_DISTANCE = 125.0;
-    static final double kP_Drive = 0.04;
-    static final double kP_Bearing = 0.03;
-    static final double kP_Yaw = 0.02;
-    double ShooterVel = 1850;
+    double targetRPM = 1800;
     boolean lastA = false;
     boolean lastY = false;
     boolean ShooterOn = false;
     boolean LauncherLock = true;
+    PIDFCoefficients lastPIDF;
+    public static double kP = 200;
+    public static double kF = 12.6;
+
+    // Auto align
+    private final AprilTagWebcam aprilTagWebcam = new AprilTagWebcam();
+
+    // PD Controller
+    public static double kPAuto = 0.1;
+    public static double kD = 0.3;
+    double error = 0;
+    double lastError = 0;
+    double goalX = 0;
+    double angleTolerance = 0.4;
+    double curTime = 0;
+    double lastTime = 0;
+
+    // Driving Setup
+    double rotate, forward;
 
     @Override
     public void init() {
@@ -54,40 +70,76 @@ public class mainTeleop extends OpMode {
         flyWheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        aprilTagProcessor = new AprilTagProcessor.Builder().build();
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam1"))
-                .addProcessor(aprilTagProcessor)
-                .build();
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        Launcher.setPosition(0.875);
+        lastPIDF = new PIDFCoefficients(kP, 0, 0, kF);
+        flyWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flyWheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, lastPIDF);
+    }
+
+    @Override
+    public void start() {
+        resetRuntime();
+        curTime = getRuntime();
     }
 
 
     @Override
     public void loop() {
-        if (gamepad1.b && !lastA) {
-            autoAlign = !autoAlign;
+        double leftPower, rightPower;
+
+        forward = -gamepad1.left_stick_y;
+        rotate = gamepad1.right_stick_x;
+        double speedMultiply = gamepad1.right_bumper ? 0.6 : 1;
+
+        //get Apriltag Info
+        aprilTagWebcam.update();
+        AprilTagDetection id = aprilTagWebcam.getTagBySpesificId(21);
+
+        if (gamepad1.left_trigger > 0.3) {
+            if (id != null) {
+                error = goalX - id.ftcPose.bearing;
+
+                if (Math.abs(error) < angleTolerance) {
+                    rotate = 0;
+                } else {
+                    double pTerm = error * kPAuto;
+
+                    curTime = getRuntime();
+                    double dT = curTime - lastTime;
+                    double dTerm = ((error - lastError) / dT) * kD;
+
+                    rotate = Range.clip(pTerm + dTerm, -0.5, 0.5);
+
+
+                    lastError = error;
+                    lastTime = curTime;
+                }
+            } else {
+                lastTime = getRuntime();
+                lastError = 0;
+            }
+        } else {
+            lastError = 0;
+            lastTime = getRuntime();
         }
-        lastA = gamepad1.b;
-        if (autoAlign) {
-            RunAprilTagAuto();
-        } else  {
-            double leftPower, rightPower;
 
-            double forward = -gamepad1.left_stick_y;
-            double rotate = gamepad1.right_stick_x;
+        leftPower = Range.clip(forward - rotate, -1.0, 1.0);
+        rightPower = Range.clip(forward + rotate, -1.0, 1.0);
 
-            leftPower = Range.clip(forward - rotate, -1.0, 1.0);
-            rightPower = Range.clip(forward + rotate, -1.0, 1.0);
+        leftDrive.setPower(leftPower * speedMultiply);
+        rightDrive.setPower(rightPower * speedMultiply);
 
-            leftDrive.setPower(leftPower);
-            rightDrive.setPower(rightPower);
-        }
 
+        // Shooter
         if (!ShooterOn && !LauncherLock) { // So if Shooter is not on and LaunchLock is false, LaunchLock will be true, which makes the Launcher not work;
             LauncherLock = true;
-        }
-         else if (gamepad1.a && ShooterOn) { // And if gamepad1.a is pressed && the Shoter is active you can use the Launcher
+        } else if (gamepad1.a && ShooterOn) { // And if gamepad1.a is pressed && the Shoter is active you can use the Launcher
             LauncherLock = false;
             Launcher.setPosition(0.5);
             sleep(300);
@@ -99,89 +151,49 @@ public class mainTeleop extends OpMode {
         }
         lastY = gamepad1.y;
 
-        if (gamepad1.dpadRightWasPressed()) {ShooterVel = 18500;}
 
-        if (gamepad1.dpadLeftWasPressed()) {ShooterVel = 1500;}
+        if (gamepad1.dpadLeftWasPressed()) {
+            targetRPM = 1500;
+        }
 
-        if (gamepad1.dpadUpWasPressed()){ShooterVel += 50;}
+        if (gamepad1.dpadUpWasPressed()) {
+            targetRPM += 50
+            ;
+        }
 
-        if(gamepad1.dpadDownWasPressed()) {ShooterVel -= 50;}
+        if (gamepad1.dpadDownWasPressed()) {
+            targetRPM -= 50;
+        }
+
+
+        PIDFCoefficients current = new PIDFCoefficients(kP, 0, 0, kF);
+        if (!current.equals(lastPIDF)) {
+            flyWheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, current);
+            lastPIDF = current;
+        }
+        targetRPM = Range.clip(targetRPM, 1400, 1800);
 
         if (ShooterOn) {
-            flyWheel.setVelocity(ShooterVel);
-        }else {
+            flyWheel.setVelocity(targetRPM);
+        } else {
             flyWheel.setVelocity(0);
         }
 
-        if (flyWheel.getVelocity() > ShooterVel) {
-            gamepad1.rumble(300);
-        }
-
         telemetry.addLine("===== TELEOP STATUS =====");
-        telemetry.addData("MODE", autoAlign ? "AUTO ALIGN": "MANUAL");
+        telemetry.addData("MODE", autoAlign ? "AUTO ALIGN" : "MANUAL");
         telemetry.addData("Shooter Status", ShooterOn ? "ON" : "OFF");
         telemetry.addData("Launcher Status", LauncherLock ? "OFF" : "ON");
         telemetry.addData("Left Power", "%.2f", leftDrive.getPower());
         telemetry.addData("Right Power", "%.2f", rightDrive.getPower());
-        telemetry.addData("Velocity","%.4f RPM", flyWheel.getVelocity());
-        telemetry.addData("Target Vel", "%.4f RPM", ShooterVel);
+        telemetry.addData("Target Vel", "%.2f", targetRPM);
+        telemetry.addData("kF", kF);
+        telemetry.addData("Velocity", "%.4f RPM", flyWheel.getVelocity());
         telemetry.update();
-    }
-
-    public void RunAprilTagAuto() {
-        List<AprilTagDetection> detections = aprilTagProcessor.getDetections();
-
-        if (detections.isEmpty()) {
-            leftDrive.setPower(0);
-            rightDrive.setPower(0);
-            telemetry.addLine("MODE : AUTO | Tag Not Found");
-            return;
-        }
-
-        AprilTagDetection tag = detections.get(0);
-        double smallestBearing = Math.abs(tag.ftcPose.bearing);
-
-        for (AprilTagDetection detection: detections ) {
-            double bearing = Math.abs(detection.ftcPose.bearing);
-            if (bearing < smallestBearing) {
-                smallestBearing = bearing;
-                tag = detection;
-            }
-        }
-
-        double TargetError = tag.ftcPose.range - TARGET_DISTANCE;
-        double YawError = tag.ftcPose.yaw;
-        double bearingError = tag.ftcPose.bearing;
-
-        double drivePower = 0;
-        double turnPower = (bearingError * kP_Bearing) + (YawError * kP_Yaw);
-
-        if (Math.abs(TargetError) > 2.0) { // 2.0 Inch
-            drivePower = Range.clip(TargetError * kP_Drive, -0.6, 0.6);
-        }
-
-        turnPower = Range.clip(turnPower, -0.4, 0.4);
-
-        double leftPower = drivePower - turnPower;
-        double rightPower = drivePower + turnPower;
-
-        leftDrive.setPower(leftPower);
-        rightDrive.setPower(rightPower);
-
-        if (Math.abs(TargetError) <= 2.0 && Math.abs(YawError) < 10.0 && Math.abs(bearingError) < 2.0) {
-            leftDrive.setPower(0);
-            rightDrive.setPower(0);
-        }
-
-        telemetry.addLine("AUTO ALIGN ACTIVE");
-        telemetry.addData("Range (inch)", "%.1f", tag.ftcPose.range);
-        telemetry.addData("Bearing", "%.2f", bearingError);
-        telemetry.addData("Yaw", "%.2f", YawError);
     }
 
     @Override
     public void stop() {
-        visionPortal.close();
+        aprilTagWebcam.stop();
     }
 }
 
